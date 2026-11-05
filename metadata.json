@@ -1,0 +1,6 @@
+{
+  "name": "TechTrove - Smart Electronics E-Commerce Platform",
+  "description": "Interactive electronics e-commerce platform TechTrove featuring intelligent co-purchase product recommendations, live search catalog, and responsive shopping cart.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

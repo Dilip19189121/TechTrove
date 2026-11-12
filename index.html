@@ -31,6 +31,81 @@
             }
         }
     </script>
+    <!-- TechTrove Java DSA Backend Integration -->
+    <script>
+        // Configuration: Base URL for the Java DSA backend HTTP server
+        // Ensure the Java Main.java server is running on port 8080 before using these features
+        const JAVA_BACKEND_BASE = 'http://localhost:8080';
+
+        // Fetch recommendations from the Java DSA backend
+        // Calls GET /api/recommendations?id=<PRODUCT_ID>
+        // Returns sorted product cards by rating descending via Java Hashing, Graphs, and Sorting
+        async function fetchRecommendationsFromBackend(productId) {
+            try {
+                const response = await fetch(`${JAVA_BACKEND_BASE}/api/recommendations?id=${productId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Java backend responded with status: ${response.status}`);
+                }
+
+                const recommendations = await response.json();
+                return recommendations;
+            } catch (error) {
+                console.error('[TechTrove] Error fetching recommendations from Java backend:', error);
+                return null;
+            }
+        }
+
+        // Render recommendation cards dynamically from backend JSON response
+        function renderRecommendationCards(recommendations) {
+            const bundleItemsContainer = document.getElementById('bundle-items-container');
+            if (!bundleItemsContainer) return;
+
+            if (!recommendations || recommendations.length === 0) {
+                bundleItemsContainer.innerHTML = '<div class="text-gray-400 text-sm py-8">No recommendations available. Make sure the Java DSA backend server is running on port 8080.</div>';
+                return;
+            }
+
+            // Clear existing items
+            bundleItemsContainer.innerHTML = '';
+
+            // Render each recommended product as a bundle item
+            recommendations.forEach((product, index) => {
+                const productCard = document.createElement('div');
+                productCard.className = 'flex-0 w-[140px] bg-gray-800/80 backdrop-blur rounded-xl p-4 border border-gray-700 text-left transition-transform hover:scale-[102%] cursor-pointer';
+
+                productCard.innerHTML = `
+                    <div class="h-24 w-full rounded-xl bg-gray-700 flex items-center justify-center mb-3">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop&q=80" alt="${product.name}" class="max-w-full max-h-full object-contain">
+                    </div>
+                    <h4 class="font-bold text-sm text-white line-clamp-2">${product.name}</h4>
+                    <p class="text-xs text-gray-300 mt-1">Rating: ${product.rating}/5</p>
+                    <p class="text-xs text-blue-400 mt-2">$${product.price.toFixed(2)}</p>
+                `;
+
+                bundleItemsContainer.appendChild(productCard);
+            });
+        }
+
+        // Fallback: Display helpful message when Java server is not running
+        function showJavaServerNotRunningMessage() {
+            const bundleItemsContainer = document.getElementById('bundle-items-container');
+            if (bundleItemsContainer) {
+                bundleItemsContainer.innerHTML = `
+                    <div class="text-gray-400 text-sm py-8">
+                        Java DSA backend server not running.<br/>
+                        Start the Java backend (Main.java on port 8080) to enable live recommendations.<br/>
+                        <a href="https://github.com/codebuff/techtrove" class="text-blue-400 hover:text-blue-300 underline text-sm" target="_blank">View setup instructions</a>.
+                    </div>
+                `;
+            }
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1876,12 +1951,21 @@
          * PRODUCT DETAIL VIEW (Triggers Graph Recommendations!)
          * =========================================================================
          */
-        function viewProductDetails(productId) {
+        async function viewProductDetails(productId) {
+            // Fetch recommendations from Java DSA backend first
+            const recommendations = await fetchRecommendationsFromBackend(productId);
+
+            // Render the recommendation cards from backend response
+            renderRecommendationCards(recommendations);
+
+            // Show fallback message if no recommendations available (server not running)
+            if (!recommendations || recommendations.length === 0) {
+                showJavaServerNotRunningMessage();
+            }
+
+            // Still show the product details modal with basic info
             const product = getProductById(productId);
             if (!product) return;
-
-            // Trigger the Frequently Bought Together Recommendation Shelf with this product!
-            renderFrequentlyBoughtTogether(productId);
 
             const modalBody = document.getElementById('product-modal-body');
             const modal = document.getElementById('product-modal');
@@ -1889,58 +1973,68 @@
 
             if (!modalBody || !modal || !backdrop) return;
 
-            modalBody.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                    <div class="bg-gray-50 rounded-2xl p-6 flex items-center justify-center border border-gray-100 h-64">
-                        <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full object-contain drop-shadow-md" />
+            // Fetch related products from graph if Java backend is available
+            let relatedHtml = '';
+            if (recommendations && recommendations.length > 0) {
+                // Use backend recommendations for the bundle shelf
+                relatedHtml = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div class="bg-gray-50 rounded-2xl p-6 flex items-center justify-center border border-gray-100 h-64">
+                            <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full object-contain drop-shadow-md" />
+                        </div>
+
+                        <div class="space-y-4 text-left">
+                            <div>
+                                <span class="inline-block bg-blue-100 text-blue-700 font-bold text-xs px-2.5 py-0.5 rounded-full mb-1">
+                                    ${product.category}
+                                </span>
+                                <h2 class="text-2xl font-black text-gray-900 leading-tight">${product.name}</h2>
+                            </div>
+
+                            <!-- 5 Star Rating Breakdown -->
+                            <div class="flex items-center space-x-2 text-amber-400 text-sm">
+                                <span>★★★★★</span>
+                                <span class="text-xs font-bold text-gray-700">${product.rating.toFixed(1)} / 5.0</span>
+                                <span class="text-xs text-gray-400">(420+ Verified Reviews)</span>
+                            </div>
+
+                            <div class="text-2xl font-black text-red-600">
+                                $ ${product.price.toFixed(2)} USD
+                            </div>
+
+                            <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                                ${product.description}
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs border-y border-gray-100 py-3 font-semibold">
+                                <div>SKU: <span class="font-mono text-gray-700">${product.sku}</span></div>
+                                <div>STOCK: <span class="text-blue-600 font-extrabold">${product.stock}</span></div>
+                                <div>WARRANTY: <span class="text-gray-700">2 Years Official</span></div>
+                                <div>DISPATCH: <span class="text-emerald-600">Within 24 Hours</span></div>
+                            </div>
+
+                            <div class="flex items-center space-x-3 pt-2">
+                                <button 
+                                    onclick="addToCart('${product.id}'); closeProductModal(); openCartDrawer();" 
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold py-3 px-6 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 cursor-pointer">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                    <span>Add to Cart</span>
+                                </button>
+                                <button 
+                                    onclick="closeProductModal(); scrollToShelf();" 
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs py-3 px-4 rounded-xl transition cursor-pointer">
+                                    View Recommendations →
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                `;
+            } else {
+                // Fallback: Use DSA Graph logic when backend isn't running
+                renderFrequentlyBoughtTogether(productId);
+            }
 
-                    <div class="space-y-4 text-left">
-                        <div>
-                            <span class="inline-block bg-blue-100 text-blue-700 font-bold text-xs px-2.5 py-0.5 rounded-full mb-1">
-                                ${product.category}
-                            </span>
-                            <h2 class="text-2xl font-black text-gray-900 leading-tight">${product.name}</h2>
-                        </div>
-
-                        <!-- 5 Star Rating Breakdown -->
-                        <div class="flex items-center space-x-2 text-amber-400 text-sm">
-                            <span>★★★★★</span>
-                            <span class="text-xs font-bold text-gray-700">${product.rating.toFixed(1)} / 5.0</span>
-                            <span class="text-xs text-gray-400">(420+ Verified Reviews)</span>
-                        </div>
-
-                        <div class="text-2xl font-black text-red-600">
-                            $ ${product.price.toFixed(2)} USD
-                        </div>
-
-                        <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                            ${product.description}
-                        </p>
-
-                        <div class="grid grid-cols-2 gap-2 text-xs border-y border-gray-100 py-3 font-semibold">
-                            <div>SKU: <span class="font-mono text-gray-700">${product.sku}</span></div>
-                            <div>STOCK: <span class="text-blue-600 font-extrabold">${product.stock}</span></div>
-                            <div>WARRANTY: <span class="text-gray-700">2 Years Official</span></div>
-                            <div>DISPATCH: <span class="text-emerald-600">Within 24 Hours</span></div>
-                        </div>
-
-                        <div class="flex items-center space-x-3 pt-2">
-                            <button 
-                                onclick="addToCart('${product.id}'); closeProductModal(); openCartDrawer();" 
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold py-3 px-6 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 cursor-pointer">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                                <span>Add to Cart</span>
-                            </button>
-                            <button 
-                                onclick="closeProductModal(); scrollToShelf();" 
-                                class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs py-3 px-4 rounded-xl transition cursor-pointer">
-                                View Bundle Shelf ↓
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
+            modalBody.innerHTML = relatedHtml;
 
             backdrop.classList.remove('hidden');
             modal.classList.remove('hidden');

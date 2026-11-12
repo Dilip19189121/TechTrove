@@ -1,8 +1,7 @@
 /**
  * RecommendationGraph.java
- * DSA TOPIC: GRAPHS
- * Uses an Adjacency List (HashMap<String, List<String>>) where product IDs are Nodes
- * and co-purchases create undirected Edges. This models "frequently bought together"
+ * Uses an Adjacency List (HashMap<String, List<String>>) where product IDs are nodes
+ * and co-purchases create undirected edges. Models frequently-bought-together
  * relationships between electronics products.
  */
 
@@ -28,7 +27,7 @@ public class RecommendationGraph {
     public void addProductNode(String id) {
         if (!adjacencyList.containsKey(id)) {
             adjacencyList.put(id, new ArrayList<>());
-            System.out.println("[RecommendationGraph] Graph: Added product node '" + id + "' to adjacency list.");
+            System.out.println("[RecommendationGraph] Added product node '" + id + "' to adjacency list.");
         } else {
             System.out.println("[RecommendationGraph] Graph: Product node '" + id + "' already exists. Skipping addition.");
         }
@@ -50,14 +49,14 @@ public class RecommendationGraph {
         List<String> neighborsA = adjacencyList.get(prodA);
         if (!neighborsA.contains(prodB)) {
             neighborsA.add(prodB);
-            System.out.println("[RecommendationGraph] Graph: Added undirected edge: '" + prodA + "' <-> '" + prodB + "' (co-purchase).");
+            System.out.println("[RecommendationGraph] Added undirected edge: '" + prodA + "' <-> '" + prodB + "'.");
         }
 
         // Add A to B's adjacency list
         List<String> neighborsB = adjacencyList.get(prodB);
         if (!neighborsB.contains(prodA)) {
             neighborsB.add(prodA);
-            System.out.println("[RecommendationGraph] Graph: Added undirected edge: '" + prodB + "' <-> '" + prodA + "' (co-purchase).");
+            System.out.println("[RecommendationGraph] Added undirected edge: '" + prodB + "' <-> '" + prodA + "'.");
         }
     }
 
@@ -70,12 +69,12 @@ public class RecommendationGraph {
      */
     public List<String> getRelatedProductIds(String id) {
         if (!adjacencyList.containsKey(id)) {
-            System.out.println("[RecommendationGraph] Graph: No neighbors found for ID '" + id + "'. Product not in graph.");
+            System.out.println("[RecommendationGraph] No neighbors found for ID '" + id + "'.");
             return new ArrayList<>();
         }
 
         List<String> neighbors = adjacencyList.get(id);
-        System.out.println("[RecommendationGraph] Graph: Traversal from ID '" + id + "': found " + neighbors.size() + " related product IDs: " + neighbors);
+        System.out.println("[RecommendationGraph] Traversal from ID '" + id + "': found " + neighbors.size() + " related product IDs.");
         return new ArrayList<>(neighbors);
     }
 

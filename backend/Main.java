@@ -1,6 +1,5 @@
 /**
  * Main.java
- * DSA TOPIC: SORTING & LIVE HTTP SERVER
  * Loads the electronics catalog into CatalogManager (Hashing) and maps
  * co-purchase relationships in RecommendationGraph (Graphs).
  * Starts a lightweight HTTP Server on port 8080 using Java's built-in
@@ -11,7 +10,7 @@
  *   2. Fetches connected neighbor IDs from RecommendationGraph (Graphs)
  *   3. Sorts the resulting List<Product> by rating in descending order
  *      using Collections.sort() / Lambda Comparator (Sorting)
- *   4. Prints live DSA trace logs to the Java terminal console
+ *   4. Prints live trace logs to the Java terminal console
  *   5. Returns the sorted list as a JSON array to the frontend
  */
 
@@ -59,7 +58,7 @@ public class Main {
         catalogManager.addProduct(p11);
         catalogManager.addProduct(p12);
 
-        System.out.println("[Main] Catalog loaded: " + catalogManager.getProductCount() + " products added via HashMap hashing.");
+        System.out.println("[Main] Catalog loaded: " + catalogManager.getProductCount() + " products loaded.");
 
         // --- Step 2: Map co-purchase relationships in RecommendationGraph (Graphs) ---
         RecommendationGraph recGraph = new RecommendationGraph();
@@ -119,10 +118,10 @@ public class Main {
 
         server.setExecutor(null); // creates a default executor
         server.start();
-        System.out.println("[Main] HTTP Server started on port " + port);
-        System.out.println("[Main] CORS headers enabled: Access-Control-Allow-Origin: *");
-        System.out.println("[Main] Endpoint: GET /api/recommendations?id=<PRODUCT_ID>");
-        System.out.println("[Main] Visit http://localhost:8080/api/recommendations?id=p1 to test the DSA trace logs.");
+        System.out.println("[Main] HTTP Server started on port " + port + ".");
+        System.out.println("[Main] CORS headers enabled: Access-Control-Allow-Origin: *.");
+        System.out.println("[Main] Endpoint: GET /api/recommendations?id=<PRODUCT_ID>.");
+        System.out.println("[Main] Visit http://localhost:8080/api/recommendations?id=p1 to test the recommendation endpoint.");
     }
 
     /**
@@ -138,7 +137,7 @@ public class Main {
     private static void handleRecommendationsEndpoint(HttpExchange exchange, CatalogManager catalogManager, RecommendationGraph recGraph) {
         // Parse the product ID from query parameters
         String query = exchange.getRequestURI().getQuery();
-        System.out.println("[Main] Received request. Query string: '" + query + "'");
+        System.out.println("[Main] Received request. Query: '" + query + "'.");
 
         String productId = null;
         if (query != null) {
@@ -148,7 +147,7 @@ public class Main {
                 String[] pair = param.split("=");
                 if (pair.length == 2 && "id".equals(pair[0])) {
                     productId = pair[1];
-                    System.out.println("[Main] Parsed productId from query: '" + productId + "'");
+                    System.out.println("[Main] Parsed productId from query: '" + productId + "'.");
                     break;
                 }
             }
@@ -169,8 +168,8 @@ public class Main {
         }
 
         // --- DSA STEP 1: Hashing lookup - Look up the clicked product using CatalogManager ---
-        System.out.println("========== DSA TRACE: Starting Recommendation Pipeline ==========");
-        System.out.println("[DSA Step 1] Hashing: Looking up product with ID '" + productId + "' via CatalogManager HashMap...");
+        System.out.println("========== Recommendation Pipeline Starting ==========");
+        System.out.println("[Catalog Lookup] Fetched product details for ID: '" + productId + "'.");
         Product clickedProduct = catalogManager.getProduct(productId);
 
         if (clickedProduct == null) {
@@ -184,30 +183,30 @@ public class Main {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("[DSA Step 1] Hashing: Product not found. Ending pipeline.");
+            System.out.println("Product not found. Ending pipeline.");
             return;
         }
 
-        System.out.println("[DSA Step 1] Hashing: Found product - '" + clickedProduct.getName() + "' (Rating: " + clickedProduct.getRating() + ")");
+        System.out.println("[Catalog Lookup] Found product - '" + clickedProduct.getName() + "' (Rating: " + clickedProduct.getRating() + ").");
 
         // --- DSA STEP 2: Graph traversal - Fetch connected neighbor IDs from RecommendationGraph ---
-        System.out.println("[DSA Step 2] Graphs: Fetching related product IDs from RecommendationGraph adjacency list...");
+        System.out.println("[Recommendation Graph] Fetching co-purchased neighbor nodes...");
         List<String> relatedProductIds = recGraph.getRelatedProductIds(productId);
 
         if (relatedProductIds.isEmpty()) {
-            System.out.println("[DSA Step 2] Graphs: No related products found for '" + productId + "'. Returning clicked product as sole recommendation.");
+            System.out.println("[Recommendation Graph] No related products found. Returning clicked product as sole recommendation.");
             // Return the clicked product itself as a recommendation
             List<Product> singleResult = new ArrayList<>();
             singleResult.add(clickedProduct);
             String json = sortProductsByRatingDescending(singleResult);
             sendJsonResponse(exchange, json);
-            System.out.println("[DSA Step 3] Sorting: Returned single product (no neighbors) as JSON.");
-            System.out.println("========== DSA TRACE: Pipeline Complete ==========");
+            System.out.println("Returned single product (no neighbors) as JSON.");
+            System.out.println("========== Recommendation Pipeline Complete ==========");
             return;
         }
 
         // --- DSA STEP 3: Sorting - Sort the resulting List<Product> by rating descending ---
-        System.out.println("[DSA Step 3] Sorting: Sorting " + relatedProductIds.size() + " products by rating descending using Collections.sort() / Lambda Comparator...");
+        System.out.println("[Ranking Engine] Sorting " + relatedProductIds.size() + " products by rating descending...");
 
         // Map the related product IDs to Product objects from the catalog
         List<Product> relatedProducts = new ArrayList<>();
@@ -234,9 +233,9 @@ public class Main {
         // Alternatively, using Java 8 Lambda (uncomment if desired):
         // Collections.sort(relatedProducts, (p1, p2) -> Double.compare(p2.getRating(), p1.getRating()));
 
-        System.out.println("[DSA Step 3] Sorting: Sorted products by rating descending: ");
+        System.out.println("[Ranking Engine] Sorted products by rating descending:");
         for (Product p : relatedProducts) {
-            System.out.println("  - " + p.getName() + ": rating=" + p.getRating());
+            System.out.println("  - " + p.getName() + ": rating=" + p.getRating() + ".");
         }
 
         // Convert sorted products to JSON array
@@ -245,8 +244,8 @@ public class Main {
         // Send JSON response
         sendJsonResponse(exchange, json);
 
-        System.out.println("[DSA Step 3] Sorting: Returned sorted JSON array to frontend.");
-        System.out.println("========== DSA TRACE: Pipeline Complete ==========");
+        System.out.println("[Ranking Engine] Returned sorted JSON array to frontend.");
+        System.out.println("========== Recommendation Pipeline Complete ==========");
     }
 
     /**

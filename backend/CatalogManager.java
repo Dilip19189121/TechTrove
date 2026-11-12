@@ -1,9 +1,7 @@
 /**
  * CatalogManager.java
- * DSA TOPIC: HASHING
  * Uses a Java HashMap<String, Product> to store products by their unique ID
- * for O(1) constant-time lookups. This implements the hashing concept
- * where product IDs serve as keys for immediate retrieval.
+ * for constant-time lookups. Product IDs serve as keys for immediate retrieval.
  */
 
 import java.util.HashMap;
@@ -25,7 +23,7 @@ public class CatalogManager {
      */
     public void addProduct(Product p) {
         catalog.put(p.getId(), p);
-        System.out.println("[CatalogManager] Hashing lookup: Added product '" + p.getName() + "' with ID '" + p.getId() + "' to catalog. Hash bucket: " + p.getId().hashCode());
+        System.out.println("[CatalogManager] Added product '" + p.getName() + "' with ID '" + p.getId() + "' to catalog.");
     }
 
     /**
@@ -38,7 +36,7 @@ public class CatalogManager {
     public Product getProduct(String id) {
         Product p = catalog.get(id);
         if (p != null) {
-            System.out.println("[CatalogManager] Hashing lookup: Found product '" + p.getName() + "' (ID: '" + id + "') in catalog via hash map get().");
+            System.out.println("[CatalogManager] Found product '" + p.getName() + "' (ID: '" + id + "') in catalog.");
         } else {
             System.out.println("[CatalogManager] Hashing lookup: No product found with ID '" + id + "'. Catalog size: " + catalog.size() + " entries.");
         }
@@ -71,7 +69,7 @@ public class CatalogManager {
      */
     public boolean containsProduct(String id) {
         boolean exists = catalog.containsKey(id);
-        System.out.println("[CatalogManager] Hashing lookup: Contains ID '" + id + "': " + exists);
+        System.out.println("[CatalogManager] Contains ID '" + id + ": " + exists);
         return exists;
     }
 }

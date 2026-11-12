@@ -1,8 +1,7 @@
 /**
  * Product.java
- * DSA TOPIC: Model class representing an electronics product.
- * This class models electronics items in the TechTrove catalog with
- * fields matching the frontend product data (White Headphone, 4K Monitor, etc.).
+ * Model class representing an electronics product in the TechTrove catalog.
+ * This class models electronics items with fields matching the frontend product data.
  */
 
 public class Product {
